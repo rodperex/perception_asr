@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
-find_package(darknet_ros_msgs REQUIRED)
+# find_package(darknet_ros_msgs REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(message_filters REQUIRED)
@@ -25,7 +25,7 @@ set(dependencies
   rclcpp
   sensor_msgs
   vision_msgs
-  darknet_ros_msgs
+  # darknet_ros_msgs
   image_transport
   cv_bridge
   OpenCV
@@ -38,9 +38,14 @@ set(dependencies
 
 include_directories(include)
 
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
 add_library(${PROJECT_NAME} SHARED
   src/perception_asr/HSVFilterNode.cpp
-  src/perception_asr/DarknetDetectionNode.cpp
+  src/perception_asr/RGBFilterNode.cpp
   src/perception_asr/DetectionTo3DfromPCNode.cpp
   src/perception_asr/DetectionTo3DfromDepthNode.cpp
 )
@@ -50,9 +55,9 @@ add_executable(hsv_filter src/hsv_filter_main.cpp)
 ament_target_dependencies(hsv_filter ${dependencies})
 target_link_libraries(hsv_filter ${PROJECT_NAME})
 
-add_executable(darknet_detection src/darknet_detection_main.cpp)
-ament_target_dependencies(darknet_detection ${dependencies})
-target_link_libraries(darknet_detection ${PROJECT_NAME})
+add_executable(rgb_filter src/rgb_filter_main.cpp)
+ament_target_dependencies(rgb_filter ${dependencies})
+target_link_libraries(rgb_filter ${PROJECT_NAME})
 
 add_executable(detection_2d_to_3d_pc2 src/detection_2d_to_3d_pc2_main.cpp)
 ament_target_dependencies(detection_2d_to_3d_pc2 ${dependencies})
@@ -65,7 +70,7 @@ target_link_libraries(detection_2d_to_3d_depth ${PROJECT_NAME})
 install(TARGETS
   ${PROJECT_NAME}
   hsv_filter
-  darknet_detection
+  rgb_filter
   detection_2d_to_3d_pc2
   detection_2d_to_3d_depth
   ARCHIVE DESTINATION lib

@@ -96,6 +96,11 @@ HSVFilterNode::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & ms
     detection_msg.bbox.size_x = bbx.width;
     detection_msg.bbox.size_y = bbx.height;
 
+    vision_msgs::msg::ObjectHypothesisWithPose hypothesis_msg;
+    hypothesis_msg.hypothesis.class_id = "ND";
+    hypothesis_msg.hypothesis.score = 1.0;
+    detection_msg.results.push_back(hypothesis_msg);
+
     vision_msgs::msg::Detection2DArray detection_array_msg;
     detection_array_msg.header = msg->header;
     detection_array_msg.detections.push_back(detection_msg);
