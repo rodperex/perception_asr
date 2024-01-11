@@ -43,7 +43,7 @@ DetectionTo3DfromDepthNode::DetectionTo3DfromDepthNode()
     std::make_shared<message_filters::Subscriber<vision_msgs::msg::Detection2DArray>>(
     this, "input_detection_2d", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
   sync_ = std::make_shared<message_filters::Synchronizer<MySyncPolicy>>(
-    MySyncPolicy(10), *depth_sub_, *detection_sub_);
+    MySyncPolicy(100), *depth_sub_, *detection_sub_);
   sync_->registerCallback(std::bind(&DetectionTo3DfromDepthNode::callback_sync, this, _1, _2));
 
   info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
@@ -88,21 +88,32 @@ DetectionTo3DfromDepthNode::callback_sync(
       vision_msgs::msg::Detection3D detection_3d_msg;
       detection_3d_msg.results = detection.results;
 
-      float depth = depth_image_proc::DepthTraits<uint16_t>::toMeters(
+      float depth;
+      if (image_msg->encoding == "32FC2") {
+        depth = depth_image_proc::DepthTraits<float>::toMeters(
+        cv_depth_ptr->image.at<float>(
+          cv::Point2d(detection.bbox.center.position.x, detection.bbox.center.position.y)));
+      }
+
+      if (image_msg->encoding == "16UC1") {
+        depth = depth_image_proc::DepthTraits<uint16_t>::toMeters(
         cv_depth_ptr->image.at<uint16_t>(
           cv::Point2d(detection.bbox.center.position.x, detection.bbox.center.position.y)));
+      }
+
+      RCLCPP_DEBUG(get_logger(), "x: %.2f, y: %.2f, z: %.2f", detection.bbox.center.position.x, detection.bbox.center.position.y, depth);
 
       if (std::isnan(depth)) {
         continue;
       }
 
       cv::Point3d ray = model_->projectPixelTo3dRay(
-        model_->rectifyPoint(
+        model_->rectifyPoint( // Rectifies taking into account the distortion model
           cv::Point2d(
             detection.bbox.center.position.x, detection.bbox.center.position.y)));
 
-      ray = ray / ray.z;
-      cv::Point3d point = ray * depth;
+      ray = ray / ray.z; // Normalize so z is 1.0. Ray is in camera frame
+      cv::Point3d point = ray * depth; // The point is in camera frame
 
       detection_3d_msg.bbox.center.position.x = point.x;
       detection_3d_msg.bbox.center.position.y = point.y;
