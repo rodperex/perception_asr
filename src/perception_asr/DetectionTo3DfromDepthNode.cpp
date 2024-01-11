@@ -72,7 +72,7 @@ DetectionTo3DfromDepthNode::callback_sync(
     RCLCPP_WARN(get_logger(), "Camera Model not yet available");
     return;
   }
-
+  
   if (image_msg->encoding != "16UC1" && image_msg->encoding != "32FC1") {
     RCLCPP_ERROR(get_logger(), "The image type has not depth info");
     return;
@@ -89,7 +89,7 @@ DetectionTo3DfromDepthNode::callback_sync(
       detection_3d_msg.results = detection.results;
 
       float depth;
-      if (image_msg->encoding == "32FC2") {
+      if (image_msg->encoding == "32FC1") {
         depth = depth_image_proc::DepthTraits<float>::toMeters(
         cv_depth_ptr->image.at<float>(
           cv::Point2d(detection.bbox.center.position.x, detection.bbox.center.position.y)));
@@ -100,8 +100,7 @@ DetectionTo3DfromDepthNode::callback_sync(
         cv_depth_ptr->image.at<uint16_t>(
           cv::Point2d(detection.bbox.center.position.x, detection.bbox.center.position.y)));
       }
-
-      RCLCPP_DEBUG(get_logger(), "x: %.2f, y: %.2f, z: %.2f", detection.bbox.center.position.x, detection.bbox.center.position.y, depth);
+      RCLCPP_INFO(get_logger(), "x: %.2f, y: %.2f, z: %.2f", detection.bbox.center.position.x, detection.bbox.center.position.y, depth);
 
       if (std::isnan(depth)) {
         continue;
