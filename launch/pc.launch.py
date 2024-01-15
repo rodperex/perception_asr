@@ -30,7 +30,7 @@ def generate_launch_description():
         output='screen',
         remappings=[
             ('input_detection_2d', 'detection_result'),
-            ('input_depth', '/head_front_camera/depth_registered/image_raw'),
+            ('input_depth', '/head_front_camera/depth_registered/points'),
             ('camera_info', '/head_front_camera/depth_registered/camera_info')
         ],
         parameters=[{
