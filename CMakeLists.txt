@@ -10,7 +10,6 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
-# find_package(darknet_ros_msgs REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(message_filters REQUIRED)
@@ -25,7 +24,6 @@ set(dependencies
   rclcpp
   sensor_msgs
   vision_msgs
-  # darknet_ros_msgs
   image_transport
   cv_bridge
   OpenCV

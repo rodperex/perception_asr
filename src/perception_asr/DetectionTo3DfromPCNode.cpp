@@ -44,11 +44,23 @@ DetectionTo3DfromPCNode::DetectionTo3DfromPCNode()
     std::make_shared<message_filters::Subscriber<vision_msgs::msg::Detection2DArray>>(
     this, "input_detection_2d", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
   sync_ = std::make_shared<message_filters::Synchronizer<MySyncPolicy>>(
-    MySyncPolicy(10), *pc2_sub_, *detection_sub_);
+    MySyncPolicy(100), *pc2_sub_, *detection_sub_);
   sync_->registerCallback(std::bind(&DetectionTo3DfromPCNode::callback_sync, this, _1, _2));
 
+  info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
+    "camera_info", 1, std::bind(&DetectionTo3DfromPCNode::callback_info, this, _1));
   detection_pub_ = create_publisher<vision_msgs::msg::Detection3DArray>(
     "output_detection_3d", rclcpp::SensorDataQoS().reliable());
+
+}
+
+void
+DetectionTo3DfromPCNode::callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg)
+{
+  RCLCPP_INFO(get_logger(), "Camera info received");
+  info_msg_ = std::move(msg);
+
+  info_sub_ = nullptr;
 }
 
 void
@@ -67,13 +79,22 @@ DetectionTo3DfromPCNode::callback_sync(
       vision_msgs::msg::Detection3D detection_3d_msg;
       detection_3d_msg.results = detection.results;
 
-      pcl::PointXYZ & center = pc->at(
-        detection.bbox.center.position.x,
-        detection.bbox.center.position.y);
-
+      pcl::PointXYZ center;
+      if (pc->height == 1) {
+        size_t index = detection.bbox.center.position.y * info_msg_->width + detection.bbox.center.position.x;
+        RCLCPP_DEBUG(get_logger(), "Point index: %lu", index);
+        center = pc->at(index);
+      } else {
+        center = pc->at(
+          detection.bbox.center.position.x,
+          detection.bbox.center.position.y);
+      }
+      
       detection_3d_msg.bbox.center.position.x = center.x;
       detection_3d_msg.bbox.center.position.y = center.y;
       detection_3d_msg.bbox.center.position.z = center.z;
+
+      RCLCPP_INFO(get_logger(), "x: %.2f, y: %.2f, z: %.2f", center.x, center.y, center.z);
 
       if (!std::isnan(center.x) && !std::isinf(center.x)) {
         detections_3d_msg.detections.push_back(detection_3d_msg);

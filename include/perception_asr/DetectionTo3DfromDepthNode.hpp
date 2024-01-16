@@ -53,6 +53,7 @@ private:
 
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub_;
   std::shared_ptr<image_geometry::PinholeCameraModel> model_;
+  
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detection_pub_;
 };
 

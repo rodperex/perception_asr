@@ -24,6 +24,9 @@
 #include "message_filters/subscriber.h"
 #include "message_filters/sync_policies/approximate_time.h"
 
+#include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/camera_info.hpp"
+
 #include "rclcpp/rclcpp.hpp"
 
 namespace perception_asr
@@ -38,6 +41,7 @@ private:
   void callback_sync(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & pc_msg,
     const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detection_msg);
+  void callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg);
 
   typedef message_filters::sync_policies::ApproximateTime<
       sensor_msgs::msg::PointCloud2, vision_msgs::msg::Detection2DArray> MySyncPolicy;
@@ -45,6 +49,10 @@ private:
   std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>> pc2_sub_;
   std::shared_ptr<message_filters::Subscriber<vision_msgs::msg::Detection2DArray>> detection_sub_;
   std::shared_ptr<message_filters::Synchronizer<MySyncPolicy>> sync_;
+  
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub_;
+  std::shared_ptr<sensor_msgs::msg::CameraInfo> info_msg_;
+  
 
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detection_pub_;
 };
